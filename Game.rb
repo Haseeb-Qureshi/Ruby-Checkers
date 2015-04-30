@@ -9,9 +9,11 @@ class Game
   def initialize
     @board = Board.new(self)
     @cursor = [0, 0]
+    @select = false
     @players = [Player.new(self, @board, :b), Player.new(self, @board, :r)]
     @avail_moves = [] # implement this later
     @captured = []
+    @debug = []
   end
 
   def play
@@ -31,7 +33,7 @@ class Game
     @board.rows.each_with_index do |row, i|
       rendered_board << render_row(row, i)
     end
-    puts rendered_board
+    puts rendered_board + @debug
   end
 
   def reset_render
@@ -39,11 +41,22 @@ class Game
     render
   end
 
-  def move_cursor(movement)
+  def move_cursor!(movement)
     x, y = @cursor
     dx, dy = movement
     @cursor = [x + dx, y + dy]
+    @avail_moves = @board[*@cursor].moves.map(&:to) unless @select
+    init_debug                            #remove later
     render
+  end
+
+  def select!
+    @select = true
+  end
+
+  def deselect!
+    @select = false
+    move_cursor!([0, 0])
   end
 
   private
@@ -63,12 +76,44 @@ class Game
   def render_row(row, i)
     str = ""
     row.each_with_index do |piece, j|
-      bg = (i + j).even? ? :black : :white
-      bg = :green if @avail_moves.include?([i, j])
-      bg = :yellow if [i, j] == cursor
-      str << " #{piece} ".colorize(background: bg)
+      background = (i + j).even? ? :black : :white
+      background = :green if @avail_moves.include?([i, j])
+      background = :yellow if [i, j] == cursor
+
+      str << " #{piece} ".colorize(background: background)
     end
-    str
+    add_decoration(str, i)
   end
 
+  def add_decoration(str, i)
+    decoration = case i
+    when 0 then @captured.select { |piece| piece.color == :r }
+    when 4 then
+      red_str = "Red's turn.".colorize(color: :red)
+      blue_str = "Blue's turn.".colorize(color: :blue)
+      @players.first.color == :r ? [red_str] : [blue_str]
+    when 7 then @captured.select { |piece| piece.color == :b }
+    else []
+    end
+    str + "   " + decoration.join(" ")
+  end
+
+
+  def init_debug
+    @debug = []
+    debug_str = ""
+    piece = @board[*@cursor]
+    debug_str << "Cursor: #{@cursor}\n"
+    debug_str << "Piece: #{piece.class}\n"
+    debug_str << "Moves: #{piece.moves}\n"
+    debug_str << "Avail moves: #{@avail_moves}\n"
+    debug_str << "Valid_moves: #{@board.valid_moves(@players.first.color)}"
+    debug_str << ""
+    debug_str << ""
+    @debug << debug_str
+  end
+end
+
+if __FILE__ == $0
+  Game.new.play
 end
