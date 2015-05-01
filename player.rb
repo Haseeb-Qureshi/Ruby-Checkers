@@ -19,12 +19,16 @@ class Player
 
   def make_move
     from = get_selection
-    raise SelectionError if @board.my_color?(from, @color)
+    raise SelectionError if !@board.my_color?(from, @color)
     select_movement(from)
 
   rescue SelectionError
     puts "You can't select that."
-    @game.reset_render
+    rerender_game
+    retry
+  rescue InvalidMoveError
+    puts "You can't move there."
+    rerender_game
     retry
   end
 
@@ -34,25 +38,17 @@ class Player
     @game.deselect!
 
     my_move = @board.build_move(from, to, @color)
-    raise InvalidMoveError if my_move.nil?
+    if my_move.nil?
+      raise @game.moving_more_than_once? ? MustJumpError : InvalidMoveError
+    end
     piece = @board.move(my_move)
-
-  rescue InvalidMoveError
-    puts "You can't move there."
-    @game.reset_render
-    retry
   end
 
   def move_further(from)
-    @game.select!
-    to = get_to_input
-    @game.deselect!
-
-    my_move = Move.new(from, to)
-    raise InvalidMoveError if !@board.valid_moves(@color).include?(my_move)
-    piece = @board.move(my_move)
-  rescue InvalidMoveError
+    select_movement(from)
+  rescue MustJumpError
     puts "You have to make another jump."
+    @game.reset_render
     retry
   end
 
@@ -111,10 +107,17 @@ class Player
     !Board.on?([x + dx, y + dy])
   end
 
+  def rerender_game
+    @game.reset_render
+    @game.deselect!
+  end
 end
 
 class InvalidMoveError < StandardError
 end
 
 class SelectionError < StandardError
+end
+
+class MustJumpError < StandardError
 end

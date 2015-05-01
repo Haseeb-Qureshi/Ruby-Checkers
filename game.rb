@@ -81,9 +81,9 @@ class Game
     end
 
     puts "Your game was successfully saved to #{filename}!"
-    sleep(1)
+    sleep(0.8)
     puts "Now resuming gameplay."
-    sleep(1)
+    sleep(0.8)
   end
 
   def multiple_moves!(piece)
@@ -91,7 +91,11 @@ class Game
   end
 
   def let_player_move_further(from)
-    @players.first.move_further(from)
+    current_player.move_further(from)
+  end
+
+  def moving_more_than_once?
+    @moving_again
   end
 
   def multiple_moves_concluded
@@ -140,12 +144,13 @@ class Game
   end
 
   def game_over?
-    @board.pieces(@players.first.color).empty?
+    @board.pieces(current_player.color).empty?
   end
 
   def game_over_message
     puts "\n\n\nGame over! #{@players.last} wins.\n\n\n"
     sleep(3)
+    exit
   end
 
   def update_available_moves
@@ -156,7 +161,7 @@ class Game
     end
 
     @avail_moves = @moving_again.my_attacks.map(&:to) if @moving_again
-    # init_debug
+    #init_debug
     render
   end
 
@@ -178,7 +183,7 @@ class Game
     when 4 then
       red_str = "Red's turn.".colorize(color: :red)
       blue_str = "Blue's turn.".colorize(color: :blue)
-      @players.first.color == :r ? [red_str] : [blue_str]
+      current_player.color == :r ? [red_str] : [blue_str]
     when 7 then @captured.select { |piece| piece.color == :b }
     else []
     end
@@ -193,9 +198,10 @@ class Game
     debug_str << "Piece: #{piece.class}\n"
     debug_str << "Moves: #{piece.moves}\n"
     debug_str << "Avail moves: #{@avail_moves}\n"
-    debug_str << "Valid_moves: #{@board.valid_moves(@players.first.color)}"
-    debug_str << ""
-    debug_str << ""
+    debug_str << "Valid_moves: #{@board.valid_moves(@players.first.color)}\n"
+    debug_str << "Moving_again? #{@moving_again.inspect}\n"
+    debug_str << "Select? #{@select.inspect}\n"
+    debug_str << "Attacks: #{@moving_again.my_attacks.map(&:to)}" if @moving_again
     @debug << debug_str
   end
 end

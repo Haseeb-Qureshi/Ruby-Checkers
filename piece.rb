@@ -96,7 +96,7 @@ class Piece
     Board.on?(jumped) &&
       Board.on?(landing) &&
       @board[*jumped].full? &&
-      @board[*jumped].color != @color &&
+      !@board.my_color?(jumped, @color) &&
       @board[*landing].empty?
   end
 end
