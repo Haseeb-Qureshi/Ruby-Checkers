@@ -18,7 +18,7 @@ class Player
   end
 
   def make_move
-    from = get_selection
+    from = get_piece_selection
     select_movement(from)
 
   rescue SelectionError
@@ -57,7 +57,7 @@ class Player
 
   private
 
-  def get_selection
+  def get_piece_selection
     prompt = "Navigate using W-A-S-D, and select with Enter.\n"\
              "Press Q to quit, and V to save."
     navigate!(prompt)

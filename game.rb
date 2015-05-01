@@ -145,7 +145,8 @@ class Game
   end
 
   def game_over?
-    @board.pieces(current_player.color).empty?
+    @board.pieces(current_player.color).empty? ||
+      @board.valid_moves(current_player.color).empty?
   end
 
   def game_over_message
