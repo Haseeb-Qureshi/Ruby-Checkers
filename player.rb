@@ -19,7 +19,6 @@ class Player
 
   def make_move
     from = get_selection
-    raise SelectionError if !@board.my_color?(from, @color)
     select_movement(from)
 
   rescue SelectionError
@@ -62,6 +61,7 @@ class Player
     prompt = "Navigate using W-A-S-D, and select with Enter.\n"\
              "Press Q to quit, and V to save."
     navigate!(prompt)
+    raise SelectionError if !@board.my_color?(@game.cursor, @color)
     @game.cursor
   end
 
