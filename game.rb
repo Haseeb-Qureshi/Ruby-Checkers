@@ -7,7 +7,6 @@ require 'yaml'
 
 class Game
   attr_reader :board, :cursor, :captured
-  attr_writer :moving_again
 
   def self.load(filename)
     YAML.load_file(filename + ".yml")
@@ -53,28 +52,21 @@ class Game
     render
   end
 
-  def move_cursor_by!(movement) # TA : split into the 2 responsibilities
+  def move_cursor_by!(movement)
     x, y = @cursor
     dx, dy = movement
     @cursor = [x + dx, y + dy]
-    here = @board[*@cursor]
-    unless @select || here.color == @players.last.color
-      @avail_moves = here.moves.map(&:to)
-    end
-    if @moving_again
-      @avail_moves = @moving_again.my_attacks.map(&:to)
-    end
-    render
+    update_available_moves
   end
 
   def select!
     @select = true
-    move_cursor_by!([0, 0]) # TA: not longer needed
+    update_available_moves
   end
 
   def deselect!
     @select = false
-    move_cursor_by!([0, 0])
+    update_available_moves
   end
 
   def current_player
@@ -92,6 +84,18 @@ class Game
     sleep(1)
     puts "Now resuming gameplay."
     sleep(1)
+  end
+
+  def multiple_moves!(piece)
+    @moving_again = piece
+  end
+
+  def let_player_move_further(from)
+    @players.first.move_further(from)
+  end
+
+  def multiple_moves_concluded
+    @moving_again = nil
   end
 
   private
@@ -140,7 +144,20 @@ class Game
   end
 
   def game_over_message
-    puts "Game over. #{@players.last} wins."
+    puts "\n\n\nGame over! #{@players.last} wins.\n\n\n"
+    sleep(3)
+  end
+
+  def update_available_moves
+    here = @board[*@cursor]
+
+    unless @select || here.color == @players.last.color
+      @avail_moves = here.moves.map(&:to)
+    end
+
+    @avail_moves = @moving_again.my_attacks.map(&:to) if @moving_again
+    # init_debug
+    render
   end
 
   def render_row(row, i)
@@ -148,7 +165,7 @@ class Game
     row.each_with_index do |piece, j|
       background = (i + j).even? ? :black : :white
       background = :green if @avail_moves.include?([i, j])
-      background = :yellow if [i, j] == cursor
+      background = :yellow if [i, j] == @cursor
 
       str << " #{piece} ".colorize(background: background)
     end
@@ -167,7 +184,6 @@ class Game
     end
     str + "   " + decoration.join(" ")
   end
-
 
   def init_debug
     @debug = []

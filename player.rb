@@ -18,24 +18,27 @@ class Player
   end
 
   def make_move
-    from = get_from_input
-    raise SelectionError if @board[*from].color != @color
-    @game.select!
+    from = get_selection
+    raise SelectionError if @board.my_color?(from, @color)
+    select_movement(from)
 
-    # make check for whether it's valid to select that piece
+  rescue SelectionError
+    puts "You can't select that."
+    @game.reset_render
+    retry
+  end
+
+  def select_movement(from)
+    @game.select!
     to = get_to_input
     @game.deselect!
 
-    my_move = Move.new(from, to)
-    raise InvalidMoveError if !@board.valid_moves(@color).include?(my_move)
+    my_move = @board.build_move(from, to, @color)
+    raise InvalidMoveError if my_move.nil?
     piece = @board.move(my_move)
 
   rescue InvalidMoveError
     puts "You can't move there."
-    @game.reset_render
-    retry
-  rescue SelectionError
-    puts "You can't select that."
     @game.reset_render
     retry
   end
@@ -53,9 +56,13 @@ class Player
     retry
   end
 
+  def to_s
+    @color == :b ? "Blue" : "Red"
+  end
+
   private
 
-  def get_from_input
+  def get_selection
     prompt = "Navigate using W-A-S-D, and select with Enter.\nPress Q to quit, and V to save."
     navigate!(prompt)
     @game.cursor

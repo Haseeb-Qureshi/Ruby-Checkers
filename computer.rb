@@ -19,8 +19,4 @@ class Computer < Player
     end
   end
 
-  def to_s
-    @color == :b ? "Blue" : "Red"
-  end
-
 end

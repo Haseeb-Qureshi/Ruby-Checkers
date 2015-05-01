@@ -22,23 +22,11 @@ class Board
   end
 
   def move(my_move)
-    from, to = my_move.from, my_move.to
+    reassign_squares!(my_move)
+    unload_captures!(my_move)
+    king_check(my_move.piece)
 
-    piece = self[*from]
-    full_move = piece.moves.find { |move| move == my_move }
-    full_move.captured.each do |capture_piece|
-      kill(capture_piece.pos)
-    end
-
-    self[*from] = EmptySpace.new
-    self[*to] = piece
-    piece.pos = to
-    piece.make_king if piece.pos.first) % 7 == 0
-    if full_move.captured.any? && piece.my_attacks.any?
-      @game.moving_again = piece
-      @game.current_player.move_further(to)
-      @game.moving_again = nil
-    end
+    check_for_multiple_jumps(my_move)
   end
 
   def pieces(color)
@@ -49,11 +37,47 @@ class Board
     pieces(color).inject([]) { |valid_moves, piece| valid_moves += piece.moves }
   end
 
+  def build_move(from, to, color)
+    move_shell = Move.new(from, to)
+    valid_moves(color).find { |valid_move| valid_move == move_shell }
+  end
+
+  def my_color?(coords, color)
+    self[*coords].color == color
+  end
+
   private
 
-  def kill(coords)
+  def reassign_squares!(my_move)
+    from, to = my_move.from, my_move.to
+    piece = my_move.piece
+
+    self[*from] = EmptySpace.new
+    self[*to] = piece
+
+    piece.pos = to
+  end
+
+  def unload_captures!(my_move)
+    my_move.captured.each { |capture_piece| kill!(capture_piece.pos) }
+  end
+
+  def kill!(coords)
     @game.captured << self[*coords]
     self[*coords] = EmptySpace.new
+  end
+
+  def king_check(piece)
+    piece.king_me! if [0, 7].include?(piece.pos.first)
+  end
+
+  def check_for_multiple_jumps(my_move)
+    piece = my_move.piece
+    if my_move.captured.any? && piece.my_attacks.any?
+      @game.multiple_moves!(piece)
+      @game.let_player_move_further(my_move.to)
+      @game.multiple_moves_concluded
+    end
   end
 
   def seed_board

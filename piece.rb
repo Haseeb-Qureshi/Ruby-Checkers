@@ -30,7 +30,7 @@ class Piece
     @king ? king_attacks : regular_attacks
   end
 
-  def make_king
+  def king_me!
     @king = true
   end
 
