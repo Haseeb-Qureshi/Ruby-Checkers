@@ -1,26 +1,41 @@
 require_relative 'board'
 require_relative 'player'
+require_relative 'computer'
 require 'colorize'
 require 'io/console'
+require 'yaml'
 
 class Game
   attr_reader :board, :cursor, :captured
+  attr_writer :moving_again
+
+  def self.load(filename)
+    YAML.load_file(filename + ".yml")
+  rescue
+    system 'clear'
+    puts "Sorry, that file couldn't be found.".bold
+    exit
+  end
 
   def initialize
     @board = Board.new(self)
     @cursor = [0, 0]
     @select = false
-    @players = [Player.new(self, @board, :b), Player.new(self, @board, :r)]
-    @avail_moves = [] # implement this later
+    @avail_moves = []
+    @players = []
     @captured = []
     @debug = []
   end
 
-  def play
+  def start
     welcome
+    play
+  end
+
+  def play
     render
     until game_over?
-      @players.first.make_move
+      current_player.make_move
       @players.rotate!
       render
     end
@@ -29,10 +44,7 @@ class Game
 
   def render
     system "clear"
-    rendered_board = []
-    @board.rows.each_with_index do |row, i|
-      rendered_board << render_row(row, i)
-    end
+    rendered_board = @board.rows.map.with_index { |row, i| render_row(row, i) }
     puts rendered_board + @debug
   end
 
@@ -41,32 +53,90 @@ class Game
     render
   end
 
-  def move_cursor!(movement)
+  def move_cursor_by!(movement) # TA : split into the 2 responsibilities
     x, y = @cursor
     dx, dy = movement
     @cursor = [x + dx, y + dy]
-    @avail_moves = @board[*@cursor].moves.map(&:to) unless @select
-    init_debug                            #remove later
+    here = @board[*@cursor]
+    unless @select || here.color == @players.last.color
+      @avail_moves = here.moves.map(&:to)
+    end
+    if @moving_again
+      @avail_moves = @moving_again.my_attacks.map(&:to)
+    end
     render
   end
 
   def select!
     @select = true
+    move_cursor_by!([0, 0]) # TA: not longer needed
   end
 
   def deselect!
     @select = false
-    move_cursor!([0, 0])
+    move_cursor_by!([0, 0])
+  end
+
+  def current_player
+    @players.first
+  end
+
+  def save_game
+    puts "What would you like to name your savegame? Enter a filename (with no extension)."
+    filename = gets.chomp + ".yml"
+    File.open(filename, 'w') do |f|
+      f.puts(self.to_yaml)
+    end
+
+    puts "Your game was successfully saved to #{filename}!"
+    sleep(1)
+    puts "Now resuming gameplay."
+    sleep(1)
   end
 
   private
 
   def welcome
-    puts "Welcome to Checkers! Red goes first."
+    puts "Welcome to Checkers! Select your option."
+    puts "1: Player vs Player"
+    puts "2: Player vs Computer"
+    puts "3: Computer vs Computer"
+    puts "4: Load Game"
+    process_input($stdin.getch.to_i)
+
+  rescue InputError
+    puts "Sorry, invalid input. Please try again."
+    retry
+  rescue LoadingError
+    puts "Sorry, I couldn't load that file."
+    retry
+  end
+
+  def process_input(num)
+    case num
+    when 1
+      @players << Player.new(self, @board, :b)
+      @players << Player.new(self, @board, :r)
+    when 2
+      @players << Computer.new(self, @board, :b)
+      @players << Player.new(self, @board, :r)
+    when 3
+      @players << Computer.new(self, @board, :b)
+      @players << Computer.new(self, @board, :r)
+    when 4
+      load_game
+    else
+      raise InputError
+    end
+  end
+
+  def load_game
+    puts "Please type in the savegame filename (without extension)."
+    Game.load(gets.chomp).play
   end
 
   def game_over?
-    false
+    @board.pieces(@players.first.color).empty?
   end
 
   def game_over_message
@@ -85,8 +155,8 @@ class Game
     add_decoration(str, i)
   end
 
-  def add_decoration(str, i)
-    decoration = case i
+  def add_decoration(str, rownum)
+    decoration = case rownum
     when 0 then @captured.select { |piece| piece.color == :r }
     when 4 then
       red_str = "Red's turn.".colorize(color: :red)
@@ -114,6 +184,12 @@ class Game
   end
 end
 
+class InputError < StandardError
+end
+
+class LoadingError < StandardError
+end
+
 if __FILE__ == $0
-  Game.new.play
+  Game.new.start
 end

@@ -19,6 +19,7 @@ class Player
 
   def make_move
     from = get_from_input
+    raise SelectionError if @board[*from].color != @color
     @game.select!
 
     # make check for whether it's valid to select that piece
@@ -27,11 +28,28 @@ class Player
 
     my_move = Move.new(from, to)
     raise InvalidMoveError if !@board.valid_moves(@color).include?(my_move)
-    @board.move(my_move)
+    piece = @board.move(my_move)
 
   rescue InvalidMoveError
     puts "You can't move there."
     @game.reset_render
+    retry
+  rescue SelectionError
+    puts "You can't select that."
+    @game.reset_render
+    retry
+  end
+
+  def move_further(from)
+    @game.select!
+    to = get_to_input
+    @game.deselect!
+
+    my_move = Move.new(from, to)
+    raise InvalidMoveError if !@board.valid_moves(@color).include?(my_move)
+    piece = @board.move(my_move)
+  rescue InvalidMoveError
+    puts "You have to make another jump."
     retry
   end
 
@@ -61,7 +79,7 @@ class Player
         selection = true if valid_input?(input)
       end
 
-      @game.move_cursor!(KEYMAP[input])
+      @game.move_cursor_by!(KEYMAP[input])
       made_selection = true if KEYMAP[input] == [0, 0]
     end
     nil
@@ -76,7 +94,7 @@ class Player
   def do_function!(input)
     case FUNCTIONS[input]
     when :quit then exit
-    when :save then puts "We'll implement save eventually."
+    when :save then @game.save_game
     end
   end
 
@@ -91,4 +109,5 @@ end
 class InvalidMoveError < StandardError
 end
 
-#Add error handling later
+class SelectionError < StandardError
+end

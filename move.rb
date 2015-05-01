@@ -2,7 +2,8 @@ class Move
   attr_reader :from, :to, :piece, :captured
 
   def initialize(from, to, piece = nil, captured = [])
-    @from, @to, @piece, @captured = from, to, piece, captured
+    @from, @to, @piece = from, to, piece
+    @captured = captured
   end
 
   def inspect
