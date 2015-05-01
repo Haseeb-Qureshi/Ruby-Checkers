@@ -10,7 +10,7 @@ class Piece
 
   def initialize(color, pos, board)
     @color, @pos, @board = color, pos, board
-    @orientation = color == :b ? 1 : -1
+    @direction = color == :b ? 1 : -1
     @king = false
   end
 
@@ -68,21 +68,19 @@ class Piece
     x, y = @pos
     all_attacks = []
 
-    single_diffs = diff_map.map { |move| move.map { |dist| dist * @orientation } }
+    single_diffs = diff_map.map { |move| move.map { |dist| dist * @direction } }
     single_diffs.each do |dx, dy|
-      one_x = x + dx
-      one_y = y + dy
-      two_x = one_x + dx
-      two_y = one_y + dy
-      if valid_regular_attack?([one_x, one_y], [two_x, two_y])
-          all_attacks << Move.new(@pos.dup, [two_x, two_y], self, [@board[one_x, one_y]])
+      jumped = [x + dx, y + dy]
+      landing = [x + (2 * dx), y + (2 * dy)]
+      if valid_regular_attack?(jumped, landing)
+          all_attacks << Move.new(@pos.dup, landing, self, [@board[*jumped]])
       end
     end
     all_attacks
   end
 
   def single_moves(diff_map)
-    our_diffs = diff_map.map { |move| move.map { |dist| dist * @orientation } }
+    our_diffs = diff_map.map { |move| move.map { |dist| dist * @direction } }
     possible_moves = our_diffs.map do |diff|
       dx, dy = diff
       x, y = @pos

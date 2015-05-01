@@ -2,7 +2,7 @@ class Computer < Player
   def make_move
     sleep(0.3 + 0.1 * rand(2))
     my_moves = @board.valid_moves(@color)
-    best_move(my_moves)
+    make_best_move!(my_moves)
   end
 
   def move_further(from)
@@ -11,7 +11,7 @@ class Computer < Player
     best_move(my_moves)
   end
 
-  def best_move(my_moves)
+  def make_best_move!(my_moves)
     if my_moves.none? { |move| move.captured.any? }
       @board.move(my_moves.sample)
     else
@@ -19,4 +19,7 @@ class Computer < Player
     end
   end
 
+  def advanced_ai
+    # just kidding.
+  end
 end

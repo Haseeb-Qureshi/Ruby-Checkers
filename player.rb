@@ -59,7 +59,8 @@ class Player
   private
 
   def get_selection
-    prompt = "Navigate using W-A-S-D, and select with Enter.\nPress Q to quit, and V to save."
+    prompt = "Navigate using W-A-S-D, and select with Enter.\n"\
+             "Press Q to quit, and V to save."
     navigate!(prompt)
     @game.cursor
   end

@@ -74,7 +74,8 @@ class Game
   end
 
   def save_game
-    puts "What would you like to name your savegame? Enter a filename (with no extension)."
+    puts "What would you like to name your savegame?"\
+         "Enter a filename (with no extension)."
     filename = gets.chomp + ".yml"
     File.open(filename, 'w') do |f|
       f.puts(self.to_yaml)
