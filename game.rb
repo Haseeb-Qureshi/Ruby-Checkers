@@ -106,6 +106,7 @@ class Game
   private
 
   def welcome
+    system 'clear'
     puts "Welcome to Checkers! Select your option."
     puts "1: Player vs Player"
     puts "2: Player vs Computer"
@@ -132,6 +133,7 @@ class Game
     when 3
       @players << Computer.new(self, @board, :b)
       @players << Computer.new(self, @board, :r)
+      @cursor = [-1, -1]
     when 4
       load_game
     else

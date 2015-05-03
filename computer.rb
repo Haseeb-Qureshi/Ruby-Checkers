@@ -1,4 +1,8 @@
 class Computer < Player
+  def hard_mode
+    advanced_ai
+  end
+
   def make_move
     sleep(0.3 + 0.1 * rand(2))
     my_moves = @board.valid_moves(@color)
@@ -8,7 +12,7 @@ class Computer < Player
   def move_further(from)
     sleep(0.2)
     my_moves = @board.valid_moves(@color).select { |move| move.from == from }
-    best_move(my_moves)
+    make_best_move!(my_moves)
   end
 
   def make_best_move!(my_moves)
