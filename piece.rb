@@ -45,6 +45,8 @@ class Piece
   def inspect
     to_s
   end
+  
+  private
 
   def regular_jumps
     single_moves(REG_MOVES)
@@ -61,8 +63,6 @@ class Piece
   def king_attacks
     attacks(KING_MOVES)
   end
-
-  private
 
   def attacks(diff_map)
     x, y = @pos
